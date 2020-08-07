@@ -396,27 +396,30 @@ def run_check(dirs, names, prefix, suffix, exclude, unicode_version, coverage):
   
   if names:
     name_to_dirpath = {}
-    for index , name in enumerate(names):
-      name_to_dirpath.update( {name : ""} )
+    for name in names:
+      name_to_dirpath[name] = ""
 
-  else:
+  elif dirs:
       print(f'Checking files with prefix "{prefix}" and suffix "{suffix}"{msg} in: {dirs}')
       name_to_dirpath = collect_name_to_dirpath_with_override(dirs, prefix=prefix, suffix=suffix, exclude=exclude)
+
+  else:
+    print("Please provide a directory containing emoji images with -d, or provide a list with expected emoji with -n")
 
   print(f'checking {len(name_to_dirpath)} names')
   seq_to_filepath = create_sequence_to_filepath(name_to_dirpath, prefix, suffix)
   print(f'checking {len(seq_to_filepath)} sequences')
   check_sequence_to_filepath(seq_to_filepath, unicode_version, coverage)
-  print('done running checks')
+  print('Done running checks')
 
 
 def main():
   parser = argparse.ArgumentParser()
   parser.add_argument(
       '-d', '--dirs', help='directory roots containing emoji images',
-      metavar='dir', nargs='+', required=True)
+      metavar='dir', nargs='+')
   parser.add_argument(
-      '-n', '--names', help='list with all expected emoji',
+      '-n', '--names', help='list with expected emoji',
       metavar='names', nargs='+')
   parser.add_argument(
       '-e', '--exclude', help='names of source subdirs to exclude',
