@@ -30,6 +30,8 @@ TTX = ttx
 EMOJI_BUILDER = third_party/color_emoji/emoji_builder.py
 # flag for emoji builder.  Default to legacy small metrics for the time being.
 SMALL_METRICS := -S
+# keep outline tables and related tables
+KEEP_GLYF := -O
 ADD_GLYPHS = add_glyphs.py
 ADD_GLYPHS_FLAGS = -a emoji_aliases.txt
 PUA_ADDER = map_pua_emoji.py
@@ -209,7 +211,7 @@ $(COMPRESSED_DIR)/%.png: $(QUANTIZED_DIR)/%.png | check_tools $(COMPRESSED_DIR)
 $(EMOJI).ttf: check_sequence $(EMOJI).tmpl.ttf $(EMOJI_BUILDER) $(PUA_ADDER) \
 	$(ALL_COMPRESSED_FILES) | check_tools
 
-	@$(PYTHON) $(EMOJI_BUILDER) $(SMALL_METRICS) -V $(word 2,$^) "$@" "$(COMPRESSED_DIR)/emoji_u"
+	@$(PYTHON) $(EMOJI_BUILDER) $(KEEP_GLYF) $(SMALL_METRICS) -V $(word 2,$^) "$@" "$(COMPRESSED_DIR)/emoji_u"
 	@$(PYTHON) $(PUA_ADDER) "$@" "$@-with-pua"
 	@$(VS_ADDER) -vs 2640 2642 2695 --dstdir '.' -o "$@-with-pua-varsel" "$@-with-pua"
 	@mv "$@-with-pua-varsel" "$@"
