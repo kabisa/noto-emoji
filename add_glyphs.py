@@ -20,6 +20,7 @@ from fontTools import ttx
 from fontTools.ttLib.tables import otTables
 from fontTools.ttLib import newTable
 from fontTools.pens.ttGlyphPen import TTGlyphPen
+from fontTools.ttLib.tables._c_m_a_p import CmapSubtable
 
 import add_emoji_gsub
 import add_aliases
@@ -336,12 +337,31 @@ def add_ligature_sequences(font, seqs, aliases):
     for seq, name in pairs:
       add_ligature(lookup, cmap, seq, name)
 
+def add_cmap_format_4(font):
+  """Add cmap format 4 table for Windows support, based on the
+  format 12 cmap."""
+
+  cmap = get_font_cmap(font)
+
+  newtable = CmapSubtable.newSubtable(4)
+  newtable.platformID = 3
+  newtable.platEncID = 1
+  newtable.language = 0
+  newtable.cmap = {}
+
+  # Format 4 only has unicode values 0x0000 to 0xFFFF
+  for cp, name in cmap.items():
+    if cp < 65535:
+      newtable.cmap[cp] = name
+
+  font['cmap'].tables.append(newtable)
 
 def update_font_data(font, seq_to_advance, vadvance, aliases):
   """Update the font's cmap, hmtx, GSUB, and GlyphOrder tables."""
   seqs = get_all_seqs(font, seq_to_advance)
   add_glyph_data(font, seqs, seq_to_advance, vadvance)
   add_aliases_to_cmap(font, aliases)
+  add_cmap_format_4(font)
   add_ligature_sequences(font, seqs, aliases)
 
 
