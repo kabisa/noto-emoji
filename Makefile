@@ -13,7 +13,8 @@
 # limitations under the License.
 
 EMOJI = NotoColorEmoji
-font: $(EMOJI).ttf
+EMOJI_WINDOWS = NotoColorEmoji_WindowsCompatible
+all: $(EMOJI).ttf $(EMOJI_WINDOWS).ttf
 
 CFLAGS = -std=c99 -Wall -Wextra `pkg-config --cflags --libs cairo`
 LDFLAGS = -lm `pkg-config --libs cairo`
@@ -30,8 +31,6 @@ TTX = ttx
 EMOJI_BUILDER = third_party/color_emoji/emoji_builder.py
 # flag for emoji builder.  Default to legacy small metrics for the time being.
 SMALL_METRICS := -S
-# keep outline tables and related tables
-KEEP_GLYF := -O
 ADD_GLYPHS = add_glyphs.py
 ADD_GLYPHS_FLAGS = -a emoji_aliases.txt
 PUA_ADDER = map_pua_emoji.py
@@ -110,7 +109,7 @@ RESIZED_FLAG_FILES = $(addprefix $(RESIZED_FLAGS_DIR)/, $(FLAG_NAMES))
 ifndef MISSING_PY_TOOLS
 FLAG_GLYPH_NAMES = $(shell $(PYTHON) flag_glyph_name.py $(FLAGS))
 else
-FLAG_GLYPH_NAMES = 
+FLAG_GLYPH_NAMES =
 endif
 RENAMED_FLAG_NAMES = $(FLAG_GLYPH_NAMES:%=emoji_%.png)
 RENAMED_FLAG_FILES = $(addprefix $(RENAMED_FLAGS_DIR)/, $(RENAMED_FLAG_NAMES))
@@ -202,7 +201,9 @@ $(COMPRESSED_DIR)/%.png: $(QUANTIZED_DIR)/%.png | check_tools $(COMPRESSED_DIR)
 # Run make without -j if this happens.
 
 %.ttx: %.ttx.tmpl $(ADD_GLYPHS) $(ALL_COMPRESSED_FILES)
-	@$(PYTHON) $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
+	# TODO: make distinction between EMOJI and EMOJI_WINDOWS, and add
+	# --add_cmap4 flag for EMOJI_WINDOWS
+	$(PYTHON) $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
 
 %.ttf: %.ttx
 	@rm -f "$@"
@@ -211,11 +212,21 @@ $(COMPRESSED_DIR)/%.png: $(QUANTIZED_DIR)/%.png | check_tools $(COMPRESSED_DIR)
 $(EMOJI).ttf: check_sequence $(EMOJI).tmpl.ttf $(EMOJI_BUILDER) $(PUA_ADDER) \
 	$(ALL_COMPRESSED_FILES) | check_tools
 
-	@$(PYTHON) $(EMOJI_BUILDER) $(KEEP_GLYF) $(SMALL_METRICS) -V $(word 2,$^) "$@" "$(COMPRESSED_DIR)/emoji_u"
+	@$(PYTHON) $(EMOJI_BUILDER) $(SMALL_METRICS) -V $(word 2,$^) "$@" "$(COMPRESSED_DIR)/emoji_u"
 	@$(PYTHON) $(PUA_ADDER) "$@" "$@-with-pua"
 	@$(VS_ADDER) -vs 2640 2642 2695 --dstdir '.' -o "$@-with-pua-varsel" "$@-with-pua"
 	@mv "$@-with-pua-varsel" "$@"
 	@rm "$@-with-pua"
+
+$(EMOJI_WINDOWS).ttf: check_sequence $(EMOJI).tmpl.ttf $(EMOJI_BUILDER) $(PUA_ADDER) \
+	$(ALL_COMPRESSED_FILES) | check_tools
+
+	@$(PYTHON) $(EMOJI_BUILDER) -O $(SMALL_METRICS) -V $(word 2,$^) "$@" "$(COMPRESSED_DIR)/emoji_u"
+	@$(PYTHON) $(PUA_ADDER) "$@" "$@-with-pua"
+	@$(VS_ADDER) -vs 2640 2642 2695 --dstdir '.' -o "$@-with-pua-varsel" "$@-with-pua"
+	@mv "$@-with-pua-varsel" "$@"
+	@rm "$@-with-pua"
+
 
 check_sequence:
 ifdef BYPASS_SEQUENCE_CHECK
@@ -225,7 +236,7 @@ else
 endif
 
 clean:
-	rm -f $(EMOJI).ttf $(EMOJI).tmpl.ttf $(EMOJI).tmpl.ttx
+	rm -f $(EMOJI).ttf $(EMOJI_WINDOWS).ttf $(EMOJI).tmpl.ttf $(EMOJI_WINDOWS).tmpl.ttf $(EMOJI).tmpl.ttx $(EMOJI_WINDOWS).tmpl.ttx
 	rm -f waveflag
 	rm -rf $(BUILD_DIR)
 
