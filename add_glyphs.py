@@ -356,14 +356,14 @@ def add_cmap_format_4(font):
 
   font['cmap'].tables.append(newtable)
 
-def update_font_data(font, seq_to_advance, vadvance, aliases):
+def update_font_data(font, seq_to_advance, vadvance, aliases, add_cmap4):
   """Update the font's cmap, hmtx, GSUB, and GlyphOrder tables."""
   seqs = get_all_seqs(font, seq_to_advance)
   add_glyph_data(font, seqs, seq_to_advance, vadvance)
   add_aliases_to_cmap(font, aliases)
-  add_cmap_format_4(font)
   add_ligature_sequences(font, seqs, aliases)
-
+  if(add_cmap4):
+    add_cmap_format_4(font)
 
 def apply_aliases(seq_dict, aliases):
   """Aliases is a mapping from sequence to replacement sequence.  We can use
@@ -379,7 +379,7 @@ def apply_aliases(seq_dict, aliases):
   return usable_aliases
 
 
-def update_ttx(in_file, out_file, image_dirs, prefix, ext, aliases_file):
+def update_ttx(in_file, out_file, image_dirs, prefix, ext, aliases_file, add_cmap4):
   if ext != '.png':
     raise Exception('extension "%s" not supported' % ext)
 
@@ -403,7 +403,7 @@ def update_ttx(in_file, out_file, image_dirs, prefix, ext, aliases_file):
 
   vadvance = font['vhea'].advanceHeightMax if 'vhea' in font else lineheight
 
-  update_font_data(font, seq_to_advance, vadvance, aliases)
+  update_font_data(font, seq_to_advance, vadvance, aliases, add_cmap4)
 
   font.saveXML(out_file)
 
@@ -426,11 +426,13 @@ def main():
   parser.add_argument(
       '-a', '--aliases', help='process alias table', const='emoji_aliases.txt',
       nargs='?', metavar='file')
+  parser.add_argument(
+      '--add_cmap4', help='add cmap format 4', dest='add_cmap4', action='store_true')
   args = parser.parse_args()
 
   update_ttx(
       args.in_file, args.out_file, args.image_dirs, args.prefix, args.ext,
-      args.aliases)
+      args.aliases, args.add_cmap4)
 
 
 if __name__ == '__main__':
