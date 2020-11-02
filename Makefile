@@ -200,10 +200,11 @@ $(COMPRESSED_DIR)/%.png: $(QUANTIZED_DIR)/%.png | check_tools $(COMPRESSED_DIR)
 # ...
 # Run make without -j if this happens.
 
-%.ttx: %.ttx.tmpl $(ADD_GLYPHS) $(ALL_COMPRESSED_FILES)
-	# TODO: make distinction between EMOJI and EMOJI_WINDOWS, and add
-	# --add_cmap4 flag for EMOJI_WINDOWS
+$(EMOJI).tmpl.ttx: $(EMOJI).tmpl.ttx.tmpl $(ADD_GLYPHS) $(ALL_COMPRESSED_FILES)
 	$(PYTHON) $(ADD_GLYPHS) -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
+
+$(EMOJI_WINDOWS).tmpl.ttx: $(EMOJI_WINDOWS).tmpl.ttx.tmpl $(ADD_GLYPHS) $(ALL_COMPRESSED_FILES)
+	$(PYTHON) $(ADD_GLYPHS) --add_cmap4 -f "$<" -o "$@" -d "$(COMPRESSED_DIR)" $(ADD_GLYPHS_FLAGS)
 
 %.ttf: %.ttx
 	@rm -f "$@"

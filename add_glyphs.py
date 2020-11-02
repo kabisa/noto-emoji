@@ -162,15 +162,16 @@ def add_glyph_data(font, seqs, seq_to_advance, vadvance):
   # The added codepoints have no advance information, so will get a zero
   # advance.
   #
-  # An empty glyph will be added to the glyf table to ensure compatibility
-  # with systems requiring a glyf table, like Windows 10.
+  # If a glyf table is present, empty glyphs will be added to ensure
+  # compatibility with systems requiring a glyf table, like Windows 10.
 
   pen = TTGlyphPen(None)
   empty_glyph = pen.glyph()
   cmap = get_font_cmap(font)
   hmtx = font['hmtx'].metrics
   vmtx = font['vmtx'].metrics
-  glyf = font['glyf']
+  if 'glyf' in font:
+    glyf = font['glyf']
 
   # We don't expect sequences to be in the glyphOrder, since we removed all the
   # single-cp sequences from it and don't expect it to already contain names
@@ -195,7 +196,8 @@ def add_glyph_data(font, seqs, seq_to_advance, vadvance):
     if name not in reverseGlyphMap:
       font.glyphOrder.append(name)
       updatedGlyphOrder=True
-    glyf[name] = empty_glyph
+    if 'glyf' in font:
+      glyf[name] = empty_glyph
 
   if updatedGlyphOrder:
     delattr(font, '_reverseGlyphOrderDict')
